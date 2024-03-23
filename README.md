@@ -24,7 +24,7 @@ $ git clone https://github.com/c-3lab/opendata-pdf-to-csv.git
 
 3. プロジェクト初期化
 ```
-$ dim init 
+$ dim init
 ```
 
 4. pdfの一括インストール
