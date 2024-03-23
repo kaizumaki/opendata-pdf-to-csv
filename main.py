@@ -41,4 +41,4 @@ for i, prefecture in enumerate(PREFECTURES, 1):
     result_df = df.dropna(thresh=2).dropna(subset=[df.index[0]], axis=1)
 
     prefecture_number = str(i).zfill(2)
-    result_df.to_csv(f"./output_files/{prefecture_number}_{prefecture}_.csv", header=False, index=False)
+    result_df.to_csv(f"./output_files/{prefecture_number}_{prefecture}.csv", header=False, index=False)
