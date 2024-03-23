@@ -1,6 +1,7 @@
 import pandas as pd
 import tabula
 import os
+import datetime
 from constants import PREFECTURES
 
 
@@ -40,5 +41,11 @@ for i, prefecture in enumerate(PREFECTURES, 1):
     # データが2つ未満の行は不要な可能性が高いので行を削除 & 列名に欠損値がある場合も列ごと削除
     result_df = df.dropna(thresh=2).dropna(subset=[df.index[0]], axis=1)
 
+    # 実行時の日付をyyyymmddで取得する。
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    today = now.strftime('%Y%m%d')
+
     prefecture_number = str(i).zfill(2)
-    result_df.to_csv(f"./output_files/{prefecture_number}_{prefecture}.csv", header=False, index=False)
+    result_df.to_csv(f"./output_files/{prefecture_number}_{prefecture}_{today}.csv", header=False, index=False)
