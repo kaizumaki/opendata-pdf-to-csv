@@ -48,4 +48,4 @@ for i, prefecture in enumerate(PREFECTURES, 1):
     today = now.strftime('%Y%m%d')
 
     prefecture_number = str(i).zfill(2)
-    result_df.to_csv(f"./output_files_test/{prefecture_number}_{prefecture}_{today}.csv", header=False, index=False)
+    result_df.to_csv(f"./output_files/{prefecture_number}_{prefecture}_{today}.csv", header=False, index=False)
