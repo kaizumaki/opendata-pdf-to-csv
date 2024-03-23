@@ -29,7 +29,7 @@ $ dim init
 
 4. pdfの一括インストール
 ```
-$ dim install
+$ dim install -P https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000186912_00002.html -e ".pdf" -n "shinryoujo"
 ```
 ※ 最後の２ファイルだけ産婦人科医療機関以外のpdfが混じってしまうので注意
 
