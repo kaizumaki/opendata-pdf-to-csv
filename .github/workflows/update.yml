@@ -28,6 +28,8 @@ jobs:
       run: dim init
     - name: Install shinryoujo data
       run: dim install -P https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000186912_00002.html -e ".pdf" -n "shinryoujo"
+    - name: Uninstall without using data
+      run: dim uninstall shinryoujo_48 && dim uninstall shinryoujo_49
     - name: Install ken all
       run: dim install https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip -p unzip -n "ken_all"
     - name: Setup Python
