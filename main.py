@@ -189,7 +189,7 @@ def main():
                         page_df = pd.DataFrame(table, columns=headers)
 
                         # 「基本情報」や「施設名」を含む行を削除
-                        page_df = fix_format_page_df(page_df, 2)
+                        page_df = fix_format_page_df(page_df, 1)
                         clear_change_line(page_df)
                         df = pd.concat([df, page_df], ignore_index=True)
 
