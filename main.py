@@ -4,7 +4,7 @@ import os
 import requests
 import re
 import xml.etree.ElementTree as ET
-# import jageocoder
+
 
 def load_prefectures(csv_file):
     """
@@ -27,19 +27,10 @@ def get_prefecture_name(prefecture_english_name):
 
 
 # CSVファイルを読み込み、郵便番号をキー、市区町村名を値とする辞書を作成
-address_df = pd.read_csv('./table/utf_ken_all.csv', header=None, dtype=str)
+address_df = pd.read_csv(
+    './data_files/ken_all/utf_ken_all.csv', header=None, dtype=str)
 postal_to_location = {row[2].strip(): (row[6], row[7])
                       for row in address_df.values}
-
-# jageocoder.init(url='https://jageocoder.info-proto.com/jsonrpc')
-# def address_to_coordinates_API(address):
-#     """
-#     住所から緯度経度を取得(API)
-#     """
-#     location = jageocoder.search(address)
-#     if location:
-#         return location['candidates'][0]['y'], location['candidates'][0]['x']
-#     return 0, 0
 
 
 def address_to_coordinates(address):
@@ -93,7 +84,6 @@ def postal2location(postal_code):
     """
     郵便番号から市区町村を取得
     """
-    return "", ""
 
     if pd.isna(postal_code):
         return "", ""
@@ -103,17 +93,6 @@ def postal2location(postal_code):
         return postal_to_location[postal_code]
 
     return "", ""
-
-
-def read_pdf(file_path):
-    with pdfplumber.open(file_path) as pdf:
-        dfs = []
-        for i in range(len(pdf.pages)):
-            table = pdf.pages[i].extract_table()
-            if table:
-                page_df = pd.DataFrame(table[1:], columns=table[0])
-                dfs.append(page_df)
-        return dfs
 
 
 def delete_title(df):
@@ -127,7 +106,12 @@ def delete_title(df):
 
 
 def delete_headers(df, line_number):
+    """
+    ヘッダー行を削除
+    """
     if df.iloc[0, 0] == "基本情報" or (len(df.columns) > 1 and df.iloc[0, 1] == "基本情報"):
+        return df.drop(df.index[:line_number])
+    if df.iloc[0, 0] == "施設名" or (len(df.columns) > 1 and df.iloc[0, 1] == "施設名"):
         return df.drop(df.index[:line_number])
     return df
 
@@ -142,18 +126,19 @@ def clear_change_line(df):
     行処理
     """
     # 改行コードと"を削除
-    df.replace('\n', '', regex=True).replace('\r', '', regex=True).replace('\r\n', '', regex=True).replace('\n\r', '', regex=True)
+    df.replace('\n', '', regex=True).replace('\r', '', regex=True).replace(
+        '\r\n', '', regex=True).replace('\n\r', '', regex=True)
     df.replace('"', '', regex=True, inplace=True)
-    
+
     # 時間表記の「~」を「-」に変換
     df.replace('~', '-', regex=True, inplace=True)
     df.replace('〜', '-', regex=True, inplace=True)
 
     # データが2つ未満の行は不要な可能性が高いので行を削除 & 列名に欠損値がある場合も列ごと削除
-    #  df.dropna(thresh=2).dropna(subset=[df.index[0]], axis=1)
     df.dropna(axis=0, thresh=2, inplace=True)
 
     return df
+
 
 def get_first_page(first_table, prefecture_name):
     """
@@ -166,14 +151,16 @@ def get_first_page(first_table, prefecture_name):
     if headers[0] == "基本情報":
         row += 1
         headers = first_table[row]
-    headers = [header.replace('\n', '').replace('\r', '') if header else '' for header in first_table[row]]
-    
+    headers = [header.replace('\n', '').replace(
+        '\r', '') if header else '' for header in first_table[row]]
+
     # 沖縄だけヘッダーの最初欄に「公表の希望の有無」を入れる
     if prefecture_name == "沖縄県":
         headers[0] = "公表の希望の有無"
 
     data = first_table[row+1:]
     return headers, data
+
 
 def main():
     for i, prefecture in enumerate(PREFECTURES, 1):
