@@ -109,7 +109,7 @@ def delete_headers(df, line_number):
     """
     ヘッダー行を削除
     """
-    target_list = ["基本情報", "施設名", "施設名称"]
+    target_list = ["基本情報", "施設名"]
     for target in target_list:
         if df.iloc[0, 0] == target or (len(df.columns) > 1 and df.iloc[0, 1] == target):
             return df.drop(df.index[:line_number])
