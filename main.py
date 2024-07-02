@@ -112,7 +112,7 @@ def delete_headers(df, line_number):
     target_list = ["基本情報", "施設名", "医療機関名"]
     for target in target_list:
         if df.iloc[0, 0] == target or (len(df.columns) > 1 and df.iloc[0, 1] == target):
-            return df.drop(df.index[:line_number])
+            df = df.drop(df.index[:line_number])
     return df
 
 
@@ -188,10 +188,14 @@ def main():
                     if table:
                         page_df = pd.DataFrame(table, columns=headers)
 
-                        # 「基本情報」や「施設名」を含む行を削除
+                        # 「基本情報」「施設名」「医療機関名」を含む行を削除
                         page_df = fix_format_page_df(page_df, 1)
                         clear_change_line(page_df)
                         df = pd.concat([df, page_df], ignore_index=True)
+
+            # 沖縄県と静岡県は『公表の希望の有無』の列を削除
+            if prefecture_name in ["沖縄県", "静岡県"]:
+                df.drop(df.columns[0], axis=1, inplace=True)
 
             if "郵便番号" in df.columns:
                 # 郵便番号から市区町村を取得
