@@ -31,6 +31,8 @@ address_df = pd.read_csv(
     './data_files/ken_all/utf_ken_all.csv', header=None, dtype=str)
 postal_to_location = {row[2].strip(): (row[6], row[7])
                       for row in address_df.values}
+postal_to_location_code = {row[2].strip(): row[0] for row in address_df.values}
+address_to_location_code = {(row[6].strip(), row[7].strip()): row[0] for row in address_df.values}
 
 
 def address_to_coordinates(address):
@@ -95,6 +97,34 @@ def postal2location(postal_code):
     return "", ""
 
 
+def postal2location_code(postal_code):
+    """
+    郵便番号から市区町村コードを取得
+    """
+
+    if pd.isna(postal_code):
+        return ""
+
+    postal_code = postal_code.replace("-", "")
+    if postal_code in postal_to_location_code:
+        return postal_to_location_code[postal_code]
+
+    return ""
+
+
+def address2location_code(prefecture, location):
+    """
+    都道府県と市区町村から市区町村コードを取得
+    """
+    if not prefecture or not location:
+        return ""
+
+    if (prefecture, location) in address_to_location_code:
+        return address_to_location_code[(prefecture, location)]
+
+    return ""
+
+
 def delete_title(df):
     """
     大分県に不要なタイトルがあるため削除
@@ -109,10 +139,10 @@ def delete_headers(df, line_number):
     """
     ヘッダー行を削除
     """
-    target_list = ["基本情報", "施設名"]
+    target_list = ["基本情報", "施設名", "医療機関名"]
     for target in target_list:
         if df.iloc[0, 0] == target or (len(df.columns) > 1 and df.iloc[0, 1] == target):
-            return df.drop(df.index[:line_number])
+            df = df.drop(df.index[:line_number])
     return df
 
 
@@ -145,6 +175,10 @@ def get_first_page(first_table, prefecture_name):
     最初のページのヘッダーとデータを取得し、必要に応じてヘッダーに「公表の希望の有無」を追加
     """
     row = 1
+
+    if prefecture_name == "新潟県":
+        row = 0
+
     headers = first_table[row]
 
     # ヘッダーが「基本情報」になっている場合があるので、次のページのヘッダーを取得
@@ -188,15 +222,23 @@ def main():
                     if table:
                         page_df = pd.DataFrame(table, columns=headers)
 
-                        # 「基本情報」や「施設名」を含む行を削除
+                        # 「基本情報」「施設名」「医療機関名」を含む行を削除
                         page_df = fix_format_page_df(page_df, 1)
                         clear_change_line(page_df)
                         df = pd.concat([df, page_df], ignore_index=True)
+
+            # 沖縄県と静岡県は『公表の希望の有無』の列を削除
+            if prefecture_name in ["沖縄県", "静岡県"]:
+                df.drop(df.columns[0], axis=1, inplace=True)
 
             if "郵便番号" in df.columns:
                 # 郵便番号から市区町村を取得
                 df["都道府県"], df["市町村"] = zip(
                     *df["郵便番号"].apply(lambda x: postal2location(x) if pd.notna(x) else ("", "")))
+
+                # 郵便番号から市町村コードを取得
+                df["市町村コード"] = df["郵便番号"].apply(
+                    lambda x: postal2location_code(x) if pd.notna(x) else "")
 
             if "住所" in df.columns:
                 # 住所に都道府県が書いていない行にprefecture_nameを先頭に入れる
@@ -218,6 +260,9 @@ def main():
                     region_locality = pd.DataFrame(region_locality.tolist(
                     ), index=null_prefecture.index, columns=["都道府県", "市町村"])
                     df.update(region_locality)
+                    # 都道府県、市区町村から市区町村コードを取得
+                    df["市町村コード"] = df.apply(
+                        lambda x: address2location_code(x["都道府県"], x["市町村"]), axis=1)
 
             # CSVファイルに出力
             prefecture_number_str = str(i).zfill(2)
