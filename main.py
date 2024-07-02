@@ -175,6 +175,10 @@ def get_first_page(first_table, prefecture_name):
     最初のページのヘッダーとデータを取得し、必要に応じてヘッダーに「公表の希望の有無」を追加
     """
     row = 1
+
+    if prefecture_name == "新潟県":
+        row = 0
+
     headers = first_table[row]
 
     # ヘッダーが「基本情報」になっている場合があるので、次のページのヘッダーを取得
