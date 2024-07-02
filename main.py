@@ -31,6 +31,8 @@ address_df = pd.read_csv(
     './data_files/ken_all/utf_ken_all.csv', header=None, dtype=str)
 postal_to_location = {row[2].strip(): (row[6], row[7])
                       for row in address_df.values}
+postal_to_location_code = {row[2].strip(): row[0] for row in address_df.values}
+address_to_location_code = {(row[6].strip(), row[7].strip()): row[0] for row in address_df.values}
 
 
 def address_to_coordinates(address):
@@ -93,6 +95,34 @@ def postal2location(postal_code):
         return postal_to_location[postal_code]
 
     return "", ""
+
+
+def postal2location_code(postal_code):
+    """
+    郵便番号から市区町村コードを取得
+    """
+
+    if pd.isna(postal_code):
+        return ""
+
+    postal_code = postal_code.replace("-", "")
+    if postal_code in postal_to_location_code:
+        return postal_to_location_code[postal_code]
+
+    return ""
+
+
+def address2location_code(prefecture, location):
+    """
+    都道府県と市区町村から市区町村コードを取得
+    """
+    if not prefecture or not location:
+        return ""
+
+    if (prefecture, location) in address_to_location_code:
+        return address_to_location_code[(prefecture, location)]
+
+    return ""
 
 
 def delete_title(df):
@@ -202,6 +232,10 @@ def main():
                 df["都道府県"], df["市町村"] = zip(
                     *df["郵便番号"].apply(lambda x: postal2location(x) if pd.notna(x) else ("", "")))
 
+                # 郵便番号から市町村コードを取得
+                df["市町村コード"] = df["郵便番号"].apply(
+                    lambda x: postal2location_code(x) if pd.notna(x) else "")
+
             if "住所" in df.columns:
                 # 住所に都道府県が書いていない行にprefecture_nameを先頭に入れる
                 null_prefecture_address = df[df["住所"].str.contains(
@@ -222,6 +256,9 @@ def main():
                     region_locality = pd.DataFrame(region_locality.tolist(
                     ), index=null_prefecture.index, columns=["都道府県", "市町村"])
                     df.update(region_locality)
+                    # 都道府県、市区町村から市区町村コードを取得
+                    df["市町村コード"] = df.apply(
+                        lambda x: address2location_code(x["都道府県"], x["市町村"]), axis=1)
 
             # CSVファイルに出力
             prefecture_number_str = str(i).zfill(2)
